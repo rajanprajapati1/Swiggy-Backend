@@ -1,16 +1,35 @@
-const express = require("express");
-const cors = require("cors");
-const fetch = require("cross-fetch");
+import express from "express";
+import cors from "cors";
+import fetch from "cross-fetch";
+import dotenv from 'dotenv';
+import MongDbConnect from './config/MongDb.config.js'
+import SwiggyRoute from './routes/SwiggyRoute.js';
+import AuthRoute from './routes/AuthRoute.js';
+import cookieParser from 'cookie-parser'
+dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
-app.use(cors());
+const port = process.env.PORT || 9000;
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser())
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials : true ,
+    methods : ["GET","POST","PUT","DELETE"]
+  })
+);
+
+
+
+app.use(`${process.env.API}/swiggy`,SwiggyRoute)
+app.use(`${process.env.API}/auth`,AuthRoute)
 
 app.get("/api/restaurants", (req, res) => {
   const { lat, lng } = req.query;
-  const url = `https://www.swiggy.com/dapi/restaurants/list/v5?lat=${
-    lat
-  }&lng=${ lng}&page_type=DESKTOP_WEB_LISTING`;
+  const url = `https://www.swiggy.com/dapi/restaurants/list/v5?lat=${lat}&lng=${lng}&page_type=DESKTOP_WEB_LISTING`;
 
   fetch(url, {
     headers: {
@@ -28,7 +47,7 @@ app.get("/api/restaurants", (req, res) => {
     })
     .then((data) => {
       res.json(data);
-      console.log(data)
+      console.log(data);
     })
     .catch((error) => {
       console.error(error);
@@ -69,15 +88,7 @@ app.get("/api/menu", (req, res) => {
     });
 });
 
-app.get("/check", (req, res) => {
-  res.status(200).json({
-    msg: "working",
-  });
-});
-
-app.get("/", (req, res) => {
-  res.json({ test: "hello instafood lovers !!! " });
-});
 app.listen(port, () => {
+  MongDbConnect();
   console.log(`Server is listening on port ${port}`);
 });
